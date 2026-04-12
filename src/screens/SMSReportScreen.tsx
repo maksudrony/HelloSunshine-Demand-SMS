@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, TextInput, SectionList, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View,Text,TextInput,SectionList,TouchableOpacity,StyleSheet,KeyboardAvoidingView,Platform} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { RootStackParamList, SMSMessage } from '../types/index';
 import { determineSmsType } from '@utils/smsLogic';
 import SMSCard from '@components/SMSCard';
@@ -12,7 +13,6 @@ interface Props {
   navigation: NavigationProp;
 }
 
-// Type for the SectionList grouping
 interface SMSSection {
   title: string;
   data: SMSMessage[];
@@ -21,19 +21,22 @@ interface SMSSection {
 const SMSReportScreen: React.FC<Props> = ({ navigation }) => {
   const [allSms, setAllSms] = useState<SMSMessage[]>([]);
   const [searchNumber, setSearchNumber] = useState('');
-  const [searchDate, setSearchDate] = useState(''); // Leaving blank to show all by default
+  
+  // Date Picker States
+  const [searchDate, setSearchDate] = useState(''); // Stores 'YYYY-MM-DD'
+  const [dateObj, setDateObj] = useState(new Date()); // Stores actual Date object
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     loadDeviceSms();
   }, []);
 
   const loadDeviceSms = () => {
-    // Mocking a larger dataset from the device to show date grouping
     const rawDeviceSms = [
-      { id: '1', sender: '+8801738449485', body: 'dlv DMT-16-9662:Salam:01719082842:BRAN-Coarse Sunshine-37KG[144276];360', timestamp: '2026-04-07 12:09' },
-      { id: '2', sender: '+8801711000001', body: 'DPZ 5000 TK received successfully.', timestamp: '2026-04-07 11:30' },
-      { id: '3', sender: '+8801911000003', body: 'Hello bhai, kemon asen?', timestamp: '2026-04-06 10:00' },
-      { id: '4', sender: '+8801738449485', body: 'dlv Allardan:Arif:01730487085:BRAN-Fine Sunshine-55KG[144278];300', timestamp: '2026-04-06 09:15' },
+      { id: '1', sender: '+8801738449485', body: 'dlv DMT-16-9662:Salam:01719082842:BRAN-Coarse Sunshine-37KG[144276];360', timestamp: '2026-04-12 12:09' },
+      { id: '2', sender: '+8801711000001', body: 'DPZ 5000 TK received successfully.', timestamp: '2026-04-12 11:30' },
+      { id: '3', sender: '+8801911000003', body: 'Hello bhai, kemon asen?', timestamp: '2026-04-11 10:00' },
+      { id: '4', sender: '+8801738449485', body: 'dlv Allardan:Arif:01730487085:BRAN-Fine Sunshine-55KG[144278];300', timestamp: '2026-04-11 09:15' },
     ];
 
     const processedList: SMSMessage[] = rawDeviceSms.map(sms => ({
@@ -44,29 +47,43 @@ const SMSReportScreen: React.FC<Props> = ({ navigation }) => {
     setAllSms(processedList);
   };
 
+  // ─── Handle Date Picker Change ───
+  const onChangeDate = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false); // Hide popup on Android after selection
+    if (selectedDate) {
+      setDateObj(selectedDate);
+      
+      // Format to YYYY-MM-DD manually to avoid timezone shifting issues
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      
+      setSearchDate(`${year}-${month}-${day}`);
+    }
+  };
+
+  const clearDateFilter = () => {
+    setSearchDate('');
+    setDateObj(new Date());
+  };
+
   // ─── Filter & Group Logic ───
-  const groupedData = useMemo(() => {
-    // 1. Filter the data based on search inputs
+  const groupedData = useMemo<SMSSection[]>(() => {
     const filtered = allSms.filter(sms => {
       const matchNumber = sms.sender.includes(searchNumber);
-      // Extract just the YYYY-MM-DD part from the timestamp for basic date matching
       const matchDate = searchDate === '' || sms.timestamp.startsWith(searchDate); 
       return matchNumber && matchDate;
     });
 
-    // 2. Group the filtered data by Date
     const groups = filtered.reduce((acc: Record<string, SMSMessage[]>, currentSms) => {
-      const dateOnly = currentSms.timestamp.split(' ')[0]; // Gets "2026-04-07"
-      if (!acc[dateOnly]) {
-        acc[dateOnly] = [];
-      }
+      const dateOnly = currentSms.timestamp.split(' ')[0]; 
+      if (!acc[dateOnly]) acc[dateOnly] = [];
       acc[dateOnly].push(currentSms);
       return acc;
     }, {});
 
-    // 3. Convert object to SectionList array format
     return Object.keys(groups)
-      .sort((a, b) => b.localeCompare(a)) // Sort dates descending (newest first)
+      .sort((a, b) => b.localeCompare(a)) 
       .map(date => ({
         title: date,
         data: groups[date],
@@ -81,7 +98,6 @@ const SMSReportScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.iconText}>✕</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>SMS Report View</Text>
-        {/* Invisible spacer to perfectly center the title since there's no right button */}
         <View style={styles.iconButton} /> 
       </View>
 
@@ -91,19 +107,38 @@ const SMSReportScreen: React.FC<Props> = ({ navigation }) => {
       >
         {/* ─── Search Filter Card ─── */}
         <View style={styles.filterCard}>
-          <View style={styles.inputWrapper}>
-            <TextInput
-              style={styles.input}
-              placeholder="YYYY-MM-DD (e.g. 2026-04-07)"
-              placeholderTextColor="#9ca3af"
-              value={searchDate}
-              onChangeText={setSearchDate}
+          
+          {/* Date Picker Button */}
+          <TouchableOpacity 
+            style={styles.datePickerButton} 
+            onPress={() => setShowDatePicker(true)}
+          >
+            <Text style={[styles.dateText, !searchDate && styles.placeholderText]}>
+              {searchDate ? searchDate : "Select Date (YYYY-MM-DD)"}
+            </Text>
+            
+            <View style={styles.dateRightSide}>
+              {searchDate ? (
+                <TouchableOpacity onPress={clearDateFilter} style={styles.clearBtn}>
+                  <Text style={styles.clearBtnText}>✕</Text>
+                </TouchableOpacity>
+              ) : null}
+              <Text style={styles.calendarIcon}>📅</Text>
+            </View>
+          </TouchableOpacity>
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={dateObj}
+              mode="date"
+              display="default"
+              onValueChange={onChangeDate}
             />
-            <Text style={styles.calendarIcon}>📅</Text>
-          </View>
+          )}
           
           <View style={styles.divider} />
 
+          {/* Number Search */}
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
@@ -161,29 +196,57 @@ const styles = StyleSheet.create({
     margin: 16,
     borderRadius: 8,
     paddingHorizontal: 16,
-    paddingVertical: 8,
     borderWidth: 1,
     borderColor: '#e5e7eb',
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
   },
-  inputWrapper: {
+  
+  // Date Picker Styles
+  datePickerButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingVertical: 14,
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#111827',
+  },
+  placeholderText: {
+    color: '#9ca3af',
+  },
+  dateRightSide: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  clearBtn: {
+    backgroundColor: '#f3f4f6',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  clearBtnText: {
+    fontSize: 12,
+    color: '#4b5563',
+    fontWeight: 'bold',
+  },
+  calendarIcon: {
+    fontSize: 20,
+    color: '#6b7280',
+  },
+
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   input: {
     flex: 1,
     fontSize: 16,
     color: '#111827',
-    paddingVertical: 10,
-  },
-  calendarIcon: {
-    fontSize: 20,
-    color: '#6b7280',
+    paddingVertical: 14,
   },
   divider: {
     height: 1,
@@ -205,7 +268,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#4b5563',
   },
-  
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 60 },
   emptyIcon: { fontSize: 50, marginBottom: 16 },
   emptyText: { color: '#6b7280', fontSize: 16, fontWeight: '500' },
