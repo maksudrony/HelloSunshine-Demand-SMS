@@ -5,9 +5,11 @@ import {RootStackParamList} from '../types/index';
 import SMSNotSyncedScreen from '@screens/SMSNotSyncedScreen';
 import DashboardScreen from '@screens/DashboardScreen';
 import SMSNotProcessedScreen from '@screens/SMSNotProcessedScreen';
+import SMSReportScreen from '@screens/SMSReportScreen';
 
 // Placeholder screens (will build these next)
 import {View, Text, StyleSheet} from 'react-native';
+
 const PlaceholderScreen = ({route}: any) => (
   <View style={styles.container}>
     <Text>{route.name} — Coming Soon</Text>
@@ -33,7 +35,7 @@ const AppNavigator: React.FC = () => {
         <Stack.Screen name="Dashboard" component={DashboardScreen} />
         <Stack.Screen name="SMSNotSynced" component={SMSNotSyncedScreen} />
         <Stack.Screen name="SMSNotProcessed" component={SMSNotProcessedScreen} />
-        <Stack.Screen name="SMSReport" component={PlaceholderScreen} />
+        <Stack.Screen name="SMSReport" component={SMSReportScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
