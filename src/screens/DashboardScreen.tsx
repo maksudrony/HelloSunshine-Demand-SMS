@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {View, ScrollView, StyleSheet, Alert,} from 'react-native';
+import {View, ScrollView, StyleSheet, Alert} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
@@ -12,6 +12,9 @@ import NavigationCard from '@components/NavigationCard';
 import StatsPanel from '@components/StatsPanel';
 import StatusCard from '@components/StatusCard';
 import SMSMemoryModal from '@components/SMSMemoryModal';
+
+// Phase 3: Import our permission utility
+import { requestSMSPermission } from '@utils/permissions';
 
 type DashboardNavigationProp = NativeStackNavigationProp <
   RootStackParamList,
@@ -50,9 +53,24 @@ const DashboardScreen: React.FC<Props> = ({navigation}) => {
   const [appStatus] = useState<AppStatus>(INITIAL_STATUS);
   const [memoryModalVisible, setMemoryModalVisible] = useState(false);
 
-  const handleToggle = (value: boolean) => {
-    setSmsServiceEnabled(value);
-    // Phase 3: start/stop background SMS service here
+  // ─── PHASE 3: Updated Toggle Logic with Permissions ───
+  const handleToggle = async (value: boolean) => {
+    if (value) {
+      // User is trying to turn the service ON
+      const hasPermission = await requestSMSPermission();
+      
+      if (hasPermission) {
+        setSmsServiceEnabled(true);
+        // TODO: Phase 3 - start background SMS service here later
+      } else {
+        Alert.alert('Permission Denied', 'HelloSunshine cannot sync data without SMS permissions.');
+        setSmsServiceEnabled(false); // Force toggle back to off
+      }
+    } else {
+      // User is turning the service OFF
+      setSmsServiceEnabled(false);
+      // TODO: Phase 3 - stop background SMS service here later
+    }
   };
 
   const handleRefresh = () => {
@@ -61,7 +79,6 @@ const DashboardScreen: React.FC<Props> = ({navigation}) => {
   };
 
   const handleCheckSMSMemory = () => {
-    // Phase 3: show SMS memory popup
     setMemoryModalVisible(true);
   };
 
