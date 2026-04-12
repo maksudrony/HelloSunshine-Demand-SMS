@@ -4,6 +4,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../types/index';
 import SMSNotSyncedScreen from '@screens/SMSNotSyncedScreen';
 import DashboardScreen from '@screens/DashboardScreen';
+import SMSNotProcessedScreen from '@screens/SMSNotProcessedScreen';
 
 // Placeholder screens (will build these next)
 import {View, Text, StyleSheet} from 'react-native';
@@ -31,7 +32,7 @@ const AppNavigator: React.FC = () => {
         screenOptions={{headerShown: false}}>
         <Stack.Screen name="Dashboard" component={DashboardScreen} />
         <Stack.Screen name="SMSNotSynced" component={SMSNotSyncedScreen} />
-        <Stack.Screen name="SMSNotProcessed" component={PlaceholderScreen} />
+        <Stack.Screen name="SMSNotProcessed" component={SMSNotProcessedScreen} />
         <Stack.Screen name="SMSReport" component={PlaceholderScreen} />
       </Stack.Navigator>
     </NavigationContainer>
