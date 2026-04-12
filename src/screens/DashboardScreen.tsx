@@ -11,6 +11,7 @@ import ServiceToggleCard from '@components/ServiceToggleCard';
 import NavigationCard from '@components/NavigationCard';
 import StatsPanel from '@components/StatsPanel';
 import StatusCard from '@components/StatusCard';
+import SMSMemoryModal from '@components/SMSMemoryModal';
 
 type DashboardNavigationProp = NativeStackNavigationProp <
   RootStackParamList,
@@ -47,6 +48,7 @@ const DashboardScreen: React.FC<Props> = ({navigation}) => {
   const [smsServiceEnabled, setSmsServiceEnabled] = useState(false);
   const [stats] = useState<DashboardStats>(INITIAL_STATS);
   const [appStatus] = useState<AppStatus>(INITIAL_STATUS);
+  const [memoryModalVisible, setMemoryModalVisible] = useState(false);
 
   const handleToggle = (value: boolean) => {
     setSmsServiceEnabled(value);
@@ -60,7 +62,7 @@ const DashboardScreen: React.FC<Props> = ({navigation}) => {
 
   const handleCheckSMSMemory = () => {
     // Phase 3: show SMS memory popup
-    Alert.alert('SMS Memory', 'Feature coming in Phase 3');
+    setMemoryModalVisible(true);
   };
 
   const handleSMSReport = () => {
@@ -109,6 +111,10 @@ const DashboardScreen: React.FC<Props> = ({navigation}) => {
         <StatusCard status={appStatus} />
 
       </ScrollView>
+      <SMSMemoryModal 
+        visible={memoryModalVisible} 
+        onClose={() => setMemoryModalVisible(false)} 
+      />
     </SafeAreaView>
   );
 };
