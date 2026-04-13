@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Alert, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, FlatList, Alert, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList, SMSMessage } from '../types/index';
+
+// Components
+import ScreenHeader from '@components/ScreenHeader';
 import SMSCard from '@components/SMSCard';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'SMSNotProcessed'>;
-
 interface Props { navigation: NavigationProp; }
 
 const SMSNotProcessedScreen: React.FC<Props> = ({ navigation }) => {
@@ -40,15 +42,15 @@ const SMSNotProcessedScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-          <Text style={styles.iconText}>✕</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Data Not Process List</Text>
-        <TouchableOpacity onPress={handleProcessAction} disabled={isProcessing || isFetching} style={styles.iconButton}>
-          {isProcessing ? <ActivityIndicator color="#ffffff" size="small" /> : <Text style={styles.iconTextRefresh}>🔄</Text>}
-        </TouchableOpacity>
-      </View>
+      
+      {/* Reusable Header Component */}
+      <ScreenHeader 
+        title="Data Not Process List" 
+        onBack={() => navigation.goBack()} 
+        onRightAction={handleProcessAction}
+        rightIcon="🔄"
+        isProcessing={isProcessing || isFetching} 
+      />
 
       <View style={styles.listContainer}>
         {isFetching ? (
@@ -62,12 +64,6 @@ const SMSNotProcessedScreen: React.FC<Props> = ({ navigation }) => {
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => <SMSCard item={item} timestampSuffix=" (Server Time)" />}
             contentContainerStyle={styles.listContent}
-            ListEmptyComponent={
-              <View style={styles.centerContainer}>
-                <Text style={styles.emptyIcon}>✅</Text>
-                <Text style={styles.emptyText}>All records are fully processed!</Text>
-              </View>
-            }
           />
         )}
       </View>
@@ -77,16 +73,9 @@ const SMSNotProcessedScreen: React.FC<Props> = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
-  header: { backgroundColor: '#E8531F', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, elevation: 4 },
-  iconButton: { padding: 8 },
-  iconText: { color: '#ffffff', fontWeight: 'bold', fontSize: 18 },
-  headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: 'bold', flex: 1, textAlign: 'center' },
-  iconTextRefresh: { color: '#ffffff', fontSize: 22 },
   listContainer: { flex: 1, paddingTop: 16 },
   listContent: { paddingBottom: 20 },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 80 },
-  emptyIcon: { fontSize: 60, marginBottom: 16 },
-  emptyText: { color: '#6b7280', fontSize: 16, fontWeight: '500' },
   loadingText: { color: '#6b7280', fontSize: 14, marginTop: 12 },
 });
 
