@@ -13,8 +13,10 @@ import StatsPanel from '@components/StatsPanel';
 import StatusCard from '@components/StatusCard';
 import SMSMemoryModal from '@components/SMSMemoryModal';
 
-// Phase 3: Import our permission utility
 import { requestSMSPermission } from '@utils/permissions';
+
+// ─── NEW: Import your API Service ───
+import { syncSmsToDatabase, SunshineMobileSms_202604 } from '../services/apiSync';
 
 type DashboardNavigationProp = NativeStackNavigationProp <
   RootStackParamList,
@@ -25,7 +27,6 @@ interface Props {
   navigation: DashboardNavigationProp;
 }
 
-// ─── Mock Data (will be replaced with real data in Phase 3) ───
 const INITIAL_STATS: DashboardStats = {
   smsReceived: {
     depositSMS: 0,
@@ -53,29 +54,47 @@ const DashboardScreen: React.FC<Props> = ({navigation}) => {
   const [appStatus] = useState<AppStatus>(INITIAL_STATUS);
   const [memoryModalVisible, setMemoryModalVisible] = useState(false);
 
-  // ─── PHASE 3: Updated Toggle Logic with Permissions ───
   const handleToggle = async (value: boolean) => {
     if (value) {
-      // User is trying to turn the service ON
       const hasPermission = await requestSMSPermission();
       
       if (hasPermission) {
         setSmsServiceEnabled(true);
-        // TODO: Phase 3 - start background SMS service here later
       } else {
         Alert.alert('Permission Denied', 'HelloSunshine cannot sync data without SMS permissions.');
-        setSmsServiceEnabled(false); // Force toggle back to off
+        setSmsServiceEnabled(false); 
       }
     } else {
-      // User is turning the service OFF
       setSmsServiceEnabled(false);
-      // TODO: Phase 3 - stop background SMS service here later
     }
   };
 
-  const handleRefresh = () => {
-    // Phase 3: trigger SMS processing + refresh stats
-    Alert.alert('Processing', 'Processing unsynced SMS...');
+  // ─── NEW: Firing the API when you click Refresh ───
+  const handleRefresh = async () => {
+    Alert.alert('Processing', 'Attempting to sync with Oracle Database...');
+
+    // 1. Prepare the dummy data for testing
+    const dummySms: SunshineMobileSms_202604[] = [
+      {
+        SMS_FROM_MOBILE: "+8801738449485",
+        SMS_TEXT: "dlv DMT-16-9662:Salam:01719082842:BRAN",
+        SMS_ID: Math.floor(Math.random() * 100000), // Random ID so Oracle doesn't block it as duplicate
+        SMS_DEVICE_DATE: "04/13/2026 15:30:00", 
+        READ_FLAG: "AUTO",
+        LICENCE_NO: "2026",
+        APP_VERSION: "2"
+      }
+    ];
+
+    // 2. Send it to .NET
+    const result = await syncSmsToDatabase(dummySms);
+
+    // 3. Show the result from the server
+    if (result.Success) {
+      Alert.alert("Success!", result.Message);
+    } else {
+      Alert.alert("Failed", result.Message);
+    }
   };
 
   const handleCheckSMSMemory = () => {
@@ -101,7 +120,7 @@ const DashboardScreen: React.FC<Props> = ({navigation}) => {
         <ServiceToggleCard
           isEnabled={smsServiceEnabled}
           onToggle={handleToggle}
-          onRefresh={handleRefresh}
+          onRefresh={handleRefresh} 
         />
 
         {/* Navigation Cards Row */}
