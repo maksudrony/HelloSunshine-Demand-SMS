@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // IMPORTANT: Replace 192.168.1.X with your actual IPv4 address!
-const API_BASE_URL = 'http://10.12.12.54:7021/api/SmsSync'; 
+const API_BASE_URL = 'http://10.0.2.2:5284/api/SmsSync'; 
 
 // Updated Interface Name to match your new Oracle Table: SUNSHINE_MOBILE_SMS_202604
 export interface SunshineMobileSms_202604 {
@@ -32,6 +32,6 @@ export const syncSmsToDatabase = async (smsList: SunshineMobileSms_202604[]) => 
     } else if (error.request) {
       console.error('The app could not reach the PC. Check the IP address and Windows Firewall.');
     }
-    return { Success: false, Message: "Failed to connect to the server." };
+    return { success: false, Message: "Failed to connect to the server." };
   }
 };

@@ -90,7 +90,7 @@ const DashboardScreen: React.FC<Props> = ({navigation}) => {
     const result = await syncSmsToDatabase(dummySms);
 
     // 3. Show the result from the server
-    if (result.Success) {
+    if (result.success) {
       Alert.alert("Success!", result.Message);
     } else {
       Alert.alert("Failed", result.Message);
